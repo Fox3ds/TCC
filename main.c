@@ -34,7 +34,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define ESCALA (3.3/4095.0);
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -128,11 +128,14 @@ int main(void)
 	  HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
 	  HAL_Delay(500);
 
-	  pwm = (tesao*1000)/4050;
+	  pwm = tesao*escala;
 
 	  if(pwm<=100)
 	  {
 		  pwm = 100;
+	  }else if(pwm>=2000)
+	  {
+		  pwm = 2000;
 	  }
 
 
