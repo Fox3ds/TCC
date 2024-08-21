@@ -34,7 +34,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define ESCALA (3.3/4095.0);
+#define ESCALA (3.3/2800)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -124,19 +124,17 @@ int main(void)
 	  HAL_ADC_Start(&hadc1);
 	  HAL_ADC_PollForConversion(&hadc1, 1000);
 	  tesao = HAL_ADC_GetValue(&hadc1);
-	  sprintf(msg, "tesao: %hu  --  PWM = %i \r\n", tesao, pwm);
+
 	  HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
 	  HAL_Delay(500);
 
-	  pwm = tesao*escala;
-
-	  if(pwm<=100)
+	  pwm = tesao*ESCALA*100;
+	  sprintf(msg, "tesao: %hu  --  PWM = %i \r\n", tesao, pwm);
+	  if(pwm>=250)
 	  {
-		  pwm = 100;
-	  }else if(pwm>=2000)
-	  {
-		  pwm = 2000;
+	  	pwm = 250;
 	  }
+
 
 
 
@@ -263,9 +261,9 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 1 */
   htim4.Instance = TIM4;
-  htim4.Init.Prescaler = 999;
+  htim4.Init.Prescaler = 167;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 50;
+  htim4.Init.Period = 99;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
@@ -279,7 +277,7 @@ static void MX_TIM4_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 1000;
+  sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
