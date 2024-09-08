@@ -47,6 +47,7 @@ ADC_HandleTypeDef hadc1;
 
 TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim10;
+TIM_HandleTypeDef htim11;
 
 UART_HandleTypeDef huart2;
 
@@ -55,6 +56,8 @@ UART_HandleTypeDef huart2;
 int pwm = 0;
 uint16_t tesao = 0;
 char msg[20];
+
+uint16_t conta = 0;
 
 /* USER CODE END PV */
 
@@ -65,6 +68,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_TIM10_Init(void);
+static void MX_TIM11_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -106,9 +110,12 @@ int main(void)
   MX_ADC1_Init();
   MX_TIM4_Init();
   MX_TIM10_Init();
+  MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+
+  HAL_TIM_Base_Start_IT(&htim11);
 
 
   /* USER CODE END 2 */
@@ -129,16 +136,20 @@ int main(void)
 	  HAL_Delay(500);
 
 	  pwm = tesao*ESCALA*100;
-	  sprintf(msg, "tesao: %hu  --  PWM = %i \r\n", tesao, pwm);
-	  if(pwm>=250)
-	  {
-	  	pwm = 250;
+	  sprintf(msg, "tesao: %hu  --  PWM = %i -- Conta = %i \r\n", tesao, pwm, conta);
+
+
+	  if(pwm<=20){
+		  pwm=1;
 	  }
 
 
+	  __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, pwm-1);
 
 
-	  __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, pwm);
+
+
+
 
   }
   /* USER CODE END 3 */
@@ -261,9 +272,9 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 1 */
   htim4.Instance = TIM4;
-  htim4.Init.Prescaler = 167;
+  htim4.Init.Prescaler = 1669;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 99;
+  htim4.Init.Period = 999;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
@@ -319,6 +330,37 @@ static void MX_TIM10_Init(void)
   /* USER CODE BEGIN TIM10_Init 2 */
 
   /* USER CODE END TIM10_Init 2 */
+
+}
+
+/**
+  * @brief TIM11 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM11_Init(void)
+{
+
+  /* USER CODE BEGIN TIM11_Init 0 */
+
+  /* USER CODE END TIM11_Init 0 */
+
+  /* USER CODE BEGIN TIM11_Init 1 */
+
+  /* USER CODE END TIM11_Init 1 */
+  htim11.Instance = TIM11;
+  htim11.Init.Prescaler = 16000;
+  htim11.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim11.Init.Period = 5;
+  htim11.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim11.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim11) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM11_Init 2 */
+
+  /* USER CODE END TIM11_Init 2 */
 
 }
 
@@ -388,12 +430,56 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : BUTAO1_Pin */
+  GPIO_InitStruct.Pin = BUTAO1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(BUTAO1_GPIO_Port, &GPIO_InitStruct);
+
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
 
+
+enum {AGR=0,ANTES};
+
+
+uint16_t sensor[2];
+
+
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)//UTILIZA PARA PUXAR A INTERRUPÇÃO
+{
+
+	if(htim->Instance==TIM11)
+		{
+
+					 sensor[AGR] = HAL_GPIO_ReadPin(BUTAO1_GPIO_Port, BUTAO1_Pin);
+
+					  if(sensor[AGR] == 0 && sensor[ANTES] != 0)
+					  {
+						  if(!HAL_GPIO_ReadPin(BUTAO1_GPIO_Port, BUTAO1_Pin))
+						  {
+							  conta = 1;
+						  }
+					  }
+
+					  sensor[ANTES] = sensor[AGR];
+					  if(conta)
+					 	 				  {
+					 	 					  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+
+					 	 				  }
+					 	 				  else
+					 	 				  {
+					 	 					  HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_1);
+					 	 				  }
+
+
+		}
+}
 
 
 
