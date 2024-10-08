@@ -55,6 +55,20 @@ uint16_t tesao = 0;
 char msg[90];
 
 uint16_t conta = 0;
+
+uint16_t i = 0;
+
+
+const uint16_t PWM_Canal[4] = {
+
+		TIM_CHANNEL_1,
+		TIM_CHANNEL_2,
+		TIM_CHANNEL_3,
+		TIM_CHANNEL_4
+
+};
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -114,6 +128,7 @@ int main(void)
 
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
   HAL_TIM_Base_Start_IT(&htim11);
+  HAL_TIM_Base_Start_IT(&htim10);
 
 
 
@@ -136,18 +151,20 @@ int main(void)
 	  HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
 	  HAL_Delay(500);
 
+
+	  sprintf(msg, "tesao: %i  --  PWM = %i -- Conta = %i -- I = %i \r\n", tesao, pwm, conta, i);
+
 	  pwm = tesao*ESCALA*100;
-	  sprintf(msg, "tesao: %i  --  PWM = %i -- Conta = %i \r\n", tesao, pwm, conta);
-
-
 	  if(pwm<=20)
 	  {
 	  	pwm=1;
 	  }
 
+	  __HAL_TIM_SET_COMPARE(&htim4, PWM_Canal[0], pwm-1);
+	  __HAL_TIM_SET_COMPARE(&htim4, PWM_Canal[1], pwm-1);
+	  __HAL_TIM_SET_COMPARE(&htim4, PWM_Canal[2], pwm-1);
+	  __HAL_TIM_SET_COMPARE(&htim4, PWM_Canal[3], pwm-1);
 
-
-	  __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, pwm-1);
   }
   /* USER CODE END 3 */
 }
@@ -292,6 +309,18 @@ static void MX_TIM4_Init(void)
   {
     Error_Handler();
   }
+  if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN TIM4_Init 2 */
 
   /* USER CODE END TIM4_Init 2 */
@@ -315,7 +344,7 @@ static void MX_TIM10_Init(void)
 
   /* USER CODE END TIM10_Init 1 */
   htim10.Instance = TIM10;
-  htim10.Init.Prescaler = 19999;
+  htim10.Init.Prescaler = 5999;
   htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim10.Init.Period = 8399;
   htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -474,7 +503,7 @@ uint16_t sensor[2];
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)//UTILIZA PARA PUXAR A INTERRUPÇÃO
 {
-
+	//CODIGO DO BOTÃO DE LLIGAR E DESLIGAR
 	if(htim->Instance==TIM11)
 	{
 		sensor[AGR] = HAL_GPIO_ReadPin(BUTAO1_GPIO_Port, BUTAO1_Pin);
@@ -491,20 +520,37 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)//UTILIZA PARA PUXAR 
 		sensor[ANTES] = sensor[AGR];
 		if(conta==1)
 		{
-			HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+
 			HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, 0);
 			HAL_ADC_Start(&hadc1);
 
 		}
 		else if(conta==0)
 		{
-			HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_1);
+
 			HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, 1);
 			HAL_ADC_Stop(&hadc1);
 			pwm=0;
 			tesao=0;
 		}
 	}
+
+	//CODIGO DE MUDAR O CANAL DO PWM E O MOTOR
+	if(htim->Instance==TIM10){
+		if(conta==1){
+			HAL_TIM_PWM_Start(&htim4, PWM_Canal[i]);
+			HAL_TIM_PWM_Stop(&htim4, PWM_Canal[i-1]);
+			if(i<4){i++;}else{i=1;}
+		}
+		else if(conta==0){
+			HAL_TIM_PWM_Stop(&htim4, PWM_Canal[0]);
+			HAL_TIM_PWM_Stop(&htim4, PWM_Canal[1]);
+			HAL_TIM_PWM_Stop(&htim4, PWM_Canal[2]);
+			HAL_TIM_PWM_Stop(&htim4, PWM_Canal[3]);
+		}
+	}
+
+
 }
 
 
