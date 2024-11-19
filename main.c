@@ -42,6 +42,7 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 
+TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim10;
 TIM_HandleTypeDef htim11;
@@ -80,6 +81,7 @@ static void MX_ADC1_Init(void);
 static void MX_TIM10_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_TIM11_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -123,10 +125,12 @@ int main(void)
   MX_TIM10_Init();
   MX_TIM4_Init();
   MX_TIM11_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
 
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
   HAL_TIM_Base_Start_IT(&htim11);
   HAL_TIM_Base_Start_IT(&htim10);
 
@@ -164,6 +168,11 @@ int main(void)
 	  __HAL_TIM_SET_COMPARE(&htim4, PWM_Canal[1], pwm-1);
 	  __HAL_TIM_SET_COMPARE(&htim4, PWM_Canal[2], pwm-1);
 	  __HAL_TIM_SET_COMPARE(&htim4, PWM_Canal[3], pwm-1);
+
+	  __HAL_TIM_SET_COMPARE(&htim3, PWM_Canal[0], pwm-1);
+	  __HAL_TIM_SET_COMPARE(&htim3, PWM_Canal[1], pwm-1);
+	  __HAL_TIM_SET_COMPARE(&htim3, PWM_Canal[2], pwm-1);
+	  __HAL_TIM_SET_COMPARE(&htim3, PWM_Canal[3], pwm-1);
 
   }
   /* USER CODE END 3 */
@@ -264,6 +273,67 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 1669;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 999;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+  HAL_TIM_MspPostInit(&htim3);
 
 }
 
@@ -540,6 +610,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)//UTILIZA PARA PUXAR 
 		if(conta==1){
 			HAL_TIM_PWM_Start(&htim4, PWM_Canal[i]);
 			HAL_TIM_PWM_Stop(&htim4, PWM_Canal[i-1]);
+
+			HAL_TIM_PWM_Start(&htim3, PWM_Canal[i]);
+			HAL_TIM_PWM_Stop(&htim3, PWM_Canal[i-1]);
+
 			if(i<4){i++;}else{i=1;}
 		}
 		else if(conta==0){
@@ -547,6 +621,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)//UTILIZA PARA PUXAR 
 			HAL_TIM_PWM_Stop(&htim4, PWM_Canal[1]);
 			HAL_TIM_PWM_Stop(&htim4, PWM_Canal[2]);
 			HAL_TIM_PWM_Stop(&htim4, PWM_Canal[3]);
+
+			HAL_TIM_PWM_Stop(&htim3, PWM_Canal[0]);
+			HAL_TIM_PWM_Stop(&htim3, PWM_Canal[1]);
+			HAL_TIM_PWM_Stop(&htim3, PWM_Canal[2]);
+			HAL_TIM_PWM_Stop(&htim3, PWM_Canal[3]);
 		}
 	}
 
