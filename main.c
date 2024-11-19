@@ -565,11 +565,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 enum {AGR=0,ANTES};
-
-
 uint16_t sensor[2];
-
-
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)//UTILIZA PARA PUXAR A INTERRUPÇÃO
 {
@@ -586,18 +582,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)//UTILIZA PARA PUXAR 
 				conta ^= 1;
 			}
 		}
-
 		sensor[ANTES] = sensor[AGR];
 		if(conta==1)
 		{
-
 			HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, 0);
 			HAL_ADC_Start(&hadc1);
-
 		}
 		else if(conta==0)
 		{
-
 			HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, 1);
 			HAL_ADC_Stop(&hadc1);
 			pwm=0;
